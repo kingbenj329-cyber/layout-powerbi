@@ -53,6 +53,14 @@
   .kat.on{background:var(--biru);color:#fff}
   .dl{width:100%;background:var(--biru);color:#fff;border:none;border-radius:6px;font-size:12.5px;padding:9px;cursor:pointer;font-weight:500}
   .dl:hover{background:var(--biru-td)}
+  #noticeModal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:2000}
+  #noticeModal.on{display:flex}
+  #noticeModal .card{background:#fff;border-radius:12px;padding:20px 22px;max-width:340px;box-shadow:0 8px 30px rgba(0,0,0,.25);text-align:center}
+  #noticeModal .card h4{margin:0 0 8px;color:var(--biru);font-size:15px}
+  #noticeModal .card p{margin:0 0 12px;font-size:13px;color:var(--teks);line-height:1.5}
+  #noticeModal .card .dontshow{display:block;font-size:11px;margin:0 0 12px;color:var(--teks-mu);cursor:pointer}
+  #noticeModal .card button{background:var(--biru);color:#fff;border:none;border-radius:7px;padding:8px 24px;font-size:13px;cursor:pointer;font-weight:500}
+  #noticeModal .card button:hover{background:var(--biru-td)}
 </style></head>
 <body><div class="wrap">
   <div class="header">
@@ -83,6 +91,7 @@
       </div>
     </div>
   </div></div>
+  <div id="noticeModal"><div class="card"><h4>Peta tahun ini belum tersedia</h4><p id="noticeText"></p><label class="dontshow"><input type="checkbox" id="noticeDont" style="vertical-align:-1px"> Jangan tampilkan lagi</label><button id="noticeOk">Oke, mengerti</button></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://unpkg.com/georaster"></script>
 <script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
@@ -277,7 +286,7 @@ async function setRaster(url, fb, note){
     $("status").textContent=note||"ditampilkan"; stat(note?'amber':'hijau');
   }catch(e){
     if(myId!==reqId) return;
-    if(fb&&fb!==url){ setRaster(fb, null, yearOn?("tahun "+yearVal+" belum ada — tampil rata-rata"):null); return; }
+    if(fb&&fb!==url){ if(yearOn)showNotice(yearVal); setRaster(fb, null, yearOn?("tahun "+yearVal+" belum ada — tampil rata-rata"):null); return; }
     $("maploading").classList.remove('on');
     if(overlay){map.removeLayer(overlay);overlay=null;} curGR=null;
     $("status").textContent=yearOn?"peta tahun ini belum tersedia":"peta belum tersedia"; stat('amber');
@@ -307,7 +316,10 @@ function render(){
 }
 $("clearcat").onclick=()=>{selGroups.clear();selVar=null;render()};
 $("yearon").onchange=e=>{yearOn=e.target.checked;$("yearrange").disabled=!yearOn;$("yearout").textContent=yearOn?yearVal:"Semua";render()};
-$("yearrange").oninput=e=>{yearVal=+e.target.value;$("yearout").textContent=yearVal;render()};
+let noticeSilent=false, lastNoticeYear=null, _yrT=null;
+$("yearrange").oninput=e=>{yearVal=+e.target.value;$("yearout").textContent=yearVal;clearTimeout(_yrT);_yrT=setTimeout(render,250);};
+function showNotice(y){if(noticeSilent||lastNoticeYear===y)return;lastNoticeYear=y;$("noticeText").innerHTML="Peta untuk tahun <b>"+y+"</b> belum diunggah. Sementara ditampilkan <b>peta rata-rata</b>. Peta per-tahun akan muncul otomatis setelah tersedia.";$("noticeModal").classList.add('on');}
+$("noticeOk").onclick=()=>{if($("noticeDont").checked)noticeSilent=true;$("noticeModal").classList.remove('on');};
 $("opac").oninput=e=>{opacity=+e.target.value/100;$("opval").textContent=e.target.value+"%";if(overlay)overlay.setOpacity(opacity)};
 $("refresh").onclick=()=>{$("status").textContent="menyegarkan...";stat('amber');purgeAndReload(curUrl,u=>setRaster(u,null));};
 
