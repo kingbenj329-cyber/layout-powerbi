@@ -301,6 +301,9 @@ function render(){
   const d=DATA.find(x=>x.id===selId);
   const chips=$("dschips");chips.innerHTML="";
   if(!d){if(overlay){map.removeLayer(overlay);overlay=null;}curGR=null;$("lname").textContent="-";$("dsname").textContent="-";$("dsmeta").textContent="";$("status").textContent="tidak ada dataset";stat('amber');return;}
+  // rentang slider tahun menyesuaikan dataset terpilih
+  {const yr=$("yearrange");if(+yr.min!==d.tm||+yr.max!==d.ts){yr.min=d.tm;yr.max=d.ts;$("yrmin").textContent=d.tm;$("yrmax").textContent=d.ts;}
+   if(yearVal<d.tm)yearVal=d.tm; if(yearVal>d.ts)yearVal=d.ts; yr.value=yearVal; if(yearOn)$("yearout").textContent=yearVal;}
   if(!selVar||!d.kat.includes(selVar)) selVar=defaultVar(d);
   $("dsname").textContent=d.nama;
   $("dsmeta").textContent=(d.reso||"")+"  |  "+d.tm+"-"+d.ts+(d.var?("  |  "+d.var):"");
@@ -318,7 +321,7 @@ $("clearcat").onclick=()=>{selGroups.clear();selVar=null;render()};
 $("yearon").onchange=e=>{yearOn=e.target.checked;$("yearrange").disabled=!yearOn;$("yearout").textContent=yearOn?yearVal:"Semua";render()};
 let noticeSilent=false, lastNoticeYear=null, _yrT=null;
 $("yearrange").oninput=e=>{yearVal=+e.target.value;$("yearout").textContent=yearVal;clearTimeout(_yrT);_yrT=setTimeout(render,250);};
-function showNotice(y){if(noticeSilent||lastNoticeYear===y)return;lastNoticeYear=y;$("noticeText").innerHTML="Peta untuk tahun <b>"+y+"</b> belum diunggah. Sementara ditampilkan <b>peta rata-rata</b>. Peta per-tahun akan muncul otomatis setelah tersedia.";$("noticeModal").classList.add('on');}
+function showNotice(y){if(noticeSilent||lastNoticeYear===y)return;lastNoticeYear=y;$("noticeText").innerHTML="Peta untuk tahun <b>"+y+"</b> belum diunggah. Sementara ditampilkan <b>peta rata-rata</b>.";$("noticeModal").classList.add('on');}
 $("noticeOk").onclick=()=>{if($("noticeDont").checked)noticeSilent=true;$("noticeModal").classList.remove('on');};
 $("opac").oninput=e=>{opacity=+e.target.value/100;$("opval").textContent=e.target.value+"%";if(overlay)overlay.setOpacity(opacity)};
 $("refresh").onclick=()=>{$("status").textContent="menyegarkan...";stat('amber');purgeAndReload(curUrl,u=>setRaster(u,null));};
