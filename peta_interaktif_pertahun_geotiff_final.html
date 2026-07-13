@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<title>Climate Observatory (GeoTIFF) - SHIELD PAPUA</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+  :root{--biru:#5c3934;--biru-td:#42231f;--biru-mu:#a28e8b;--biru-50:#f4ece4;--hijau-50:#e6efe3;--hijau-td:#3d6b4f;--amber-50:#f6ead6;--amber-td:#8a5a2b;--teks:#3d2b28;--teks-mu:#a28e8b;--teks-tp:#bcaea8;--border:#e8ded4;--bg:#f7f2ec;--putih:#fff;--header:#d4b495;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,Arial,sans-serif;background:var(--bg);color:var(--teks);padding:16px}
+  .wrap{max-width:1120px;margin:0 auto}
+  .header{display:flex;align-items:center;gap:12px;background:var(--header);color:#5c3934;padding:12px 18px;border-radius:10px;margin-bottom:12px}
+  .header .t1{font-size:17px;font-weight:600}.header .t2{font-size:12px;color:#7a4f47}
+  .counter{margin-left:auto;font-size:12px;background:var(--biru-td);color:#fff;padding:5px 12px;border-radius:20px}
+  .grid{display:flex;gap:14px;align-items:stretch}
+  .side{width:236px;flex:none;display:flex;flex-direction:column;gap:12px}
+  .main{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+  .panel{background:var(--putih);border:1px solid var(--border);border-radius:10px;padding:12px}
+  .panel h3{margin:0 0 4px;font-size:12px;font-weight:600;color:var(--biru);text-transform:uppercase;letter-spacing:.03em}
+  .hint{font-size:10.5px;color:var(--teks-tp);margin-bottom:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;max-height:150px;overflow:auto}
+  .chip{font-size:10.5px;padding:4px 9px;border-radius:14px;border:1px solid var(--biru-mu);background:#fff;color:var(--biru);cursor:pointer}
+  .chip.on{background:var(--biru);color:#fff}
+  .btn{font-size:11.5px;padding:6px 13px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--teks-mu);cursor:pointer}
+  .btn2{border-color:var(--biru-mu);color:var(--biru);font-weight:500}
+  .yr{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--teks-mu);margin-bottom:6px}
+  input[type=range]{width:100%}
+  .yrout{text-align:center;font-size:26px;font-weight:700;color:var(--biru);margin-top:2px}
+  .yrrange{display:flex;justify-content:space-between;font-size:10px;color:var(--teks-tp);margin-top:2px}
+  .dslist{display:flex;flex-direction:column;gap:4px;max-height:150px;overflow:auto}
+  .dsrow{text-align:left;font-size:11.5px;padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+  .dsrow.on{border-color:var(--biru);background:var(--biru-50)}.dsrow .yr2{color:var(--teks-tp);flex:none}
+  .mapwrap{position:relative;flex:1;display:flex;min-height:520px}
+  #map{flex:1;min-height:520px;border-radius:10px;border:1px solid var(--border)}
+  #maploading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;background:rgba(66,35,31,.88);color:#fff;padding:9px 18px;border-radius:22px;font-size:13px;font-weight:500;display:none;pointer-events:none;box-shadow:0 3px 14px rgba(0,0,0,.25)}
+  #maploading.on{display:flex;align-items:center}
+  #maploading::before{content:'';display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;margin-right:9px;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .legend .lname{font-size:12.5px;font-weight:600;min-width:150px}
+  .bar{height:12px;width:180px;border-radius:3px;border:1px solid var(--border)}
+  .barlab{display:flex;justify-content:space-between;font-size:10px;color:var(--teks-mu);width:180px;margin-top:2px}
+  .op{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--teks-mu);min-width:190px}
+  .status{font-size:11px;padding:3px 9px;border-radius:12px}
+  .dsname{font-size:15px;font-weight:600}
+  .dsmeta{font-size:11px;color:var(--teks-mu);margin:5px 0 7px}
+  .varlabel{font-size:10px;color:var(--teks-tp);margin:2px 0 5px}
+  .kats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+  .kat{font-size:9.5px;padding:3px 9px;border-radius:11px;background:var(--biru-50);color:var(--biru);border:none;cursor:pointer}
+  .kat.on{background:var(--biru);color:#fff}
+  .dl{width:100%;background:var(--biru);color:#fff;border:none;border-radius:6px;font-size:12.5px;padding:9px;cursor:pointer;font-weight:500}
+  .dl:hover{background:var(--biru-td)}
+</style></head>
+<body><div class="wrap">
+  <div class="header">
+    <img src="https://shieldpapua.id/assets/images/resources/logo.png" alt="SHIELD PAPUA" style="height:32px" onerror="this.style.display='none'">
+    <div><div class="t1">CLIMATE OBSERVATORY</div></div>
+    <div class="counter" id="counter"></div>
+  </div>
+  <div class="grid">
+    <div class="side">
+      <div class="panel"><h3>Jenis iklim</h3><div class="hint">Kelompok variabel - filter dataset yang punya jenis ini</div><div class="chips" id="catlist"></div><button class="btn" id="clearcat" style="margin-top:8px;width:100%">Reset jenis iklim</button></div>
+      <div class="panel"><h3>Tahun</h3><label class="yr"><input type="checkbox" id="yearon" style="width:auto;margin-right:4px"> Aktifkan filter tahun</label><input type="range" id="yearrange" min="1980" max="2100" value="2020" step="1" disabled><div class="yrout" id="yearout">Semua</div><div class="yrrange"><span id="yrmin"></span><span id="yrmax"></span></div></div>
+      <div class="panel"><h3>Dataset</h3><div class="dslist" id="dslist"></div></div>
+    </div>
+    <div class="main">
+      <div class="mapwrap"><div id="map"></div><div id="maploading">memuat peta&hellip;</div></div>
+      <div class="panel legend">
+        <div><div class="lname" id="lname">-</div><div class="bar" id="bar"></div><div class="barlab"><span id="lmin"></span><span id="lunit"></span><span id="lmax"></span></div></div>
+        <div class="op">Opacity <input type="range" id="opac" min="0" max="100" value="100"><span id="opval">100%</span></div>
+        <button class="btn btn2" id="refresh" title="Purge cache jsDelivr & muat ulang GeoTIFF terpilih">Segarkan gambar</button>
+        <div class="status" id="status"></div>
+      </div>
+      <div class="panel">
+        <div class="dsname" id="dsname">-</div>
+        <div class="dsmeta" id="dsmeta"></div>
+        <div class="varlabel">Variabel dalam dataset (klik untuk lihat petanya):</div>
+        <div class="kats" id="dschips"></div>
+        <button class="dl" id="dlbtn">Dapatkan dataset</button>
+      </div>
+    </div>
+  </div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://unpkg.com/georaster"></script>
+<script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
+<script src="https://unpkg.com/geoblaze"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ===== KONFIG =====
+const PAPUA=[[-10.5,128.5],[0.7,158.5]];   // hanya utk fit awal; GeoTIFF menempatkan diri sendiri
+const EXCEL_URL="";                        // opsional: URL data_iklim_pertahun_geotiff.xlsx
+const NODATA=-100;                         // nilai <= ini = kosong (sentinel -9999 + kontaminasi resampling; data asli semua >= 0)
+
+// ===== Palet + legenda per variabel =====
+const PAL={temp:['#2166ac','#67a9cf','#d1e5f0','#fddbc7','#ef8a62','#b2182b'],
+ rain:['#ffffff','#c7e9b4','#7fcdbb','#41b6c4','#1d91c0','#225ea8','#0c2c84'],
+ ndvi:['#bfbfbf','#dbc33b','#a4d34d','#4caf50','#1b5e20'],fire:['#ffffb2','#fecc5c','#fd8d3c','#f03b20','#bd0026'],
+ aod:['#ffffcc','#a1dab4','#41b6c4','#225ea8','#0c2c84'],sst:['#0000ff','#00ffff','#00ff00','#ffff00','#ff0000'],
+ cur:['#ffffff','#c6dbef','#6baed6','#2171b5','#08306b'],wave:['#f7fcf0','#ccebc5','#7bccc4','#2b8cbe','#08589e','#081d58'],
+ sla:['#2166ac','#67a9cf','#f7f7f7','#ef8a62','#b2182b'],srad:['#fff7bc','#fee391','#fec44f','#fe9929','#d95f0e','#993404'],
+ gen:['#440154','#3b528b','#21918c','#5ec962','#fde725']};
+function meta(label){const s=(label||'').toLowerCase();
+ if(s.includes('sea level'))return{pal:PAL.sla,min:-0.5,max:0.5,unit:'m'};
+ if(s.includes('arus'))return{pal:PAL.cur,min:0,max:1,unit:'m/s'};
+ if(s.includes('gelombang'))return{pal:PAL.wave,min:0,max:4,unit:'m'};
+ if(s.includes('ndvi')||s.includes('evi'))return{pal:PAL.ndvi,min:0,max:1,unit:'NDVI'};
+ if(s.includes('aerosol'))return{pal:PAL.aod,min:0,max:1,unit:'AOD'};
+ if(s.includes('fire'))return{pal:PAL.fire,min:325,max:400,unit:'K'};
+ if(s.includes('radiasi')||s.includes('srad'))return{pal:PAL.srad,min:12000,max:24000,unit:'kJ/m²/hari'};
+ if(s.includes('hujan')||s.includes('prec'))return{pal:PAL.rain,min:0,max:5000,unit:'mm'};
+ if(s.includes('angin')||s.includes('wind'))return{pal:PAL.rain,min:0,max:8,unit:'m/s'};
+ if(s.includes('tekanan'))return{pal:PAL.temp,min:950,max:1015,unit:'hPa'};
+ if(s.includes('suhu')||s.includes('temp')||s.includes('sst'))return{pal:PAL.temp,min:15,max:32,unit:'°C'};
+ return{pal:PAL.gen,min:0,max:1,unit:''};}
+function toRaw(u){if(!u)return u;u=String(u).replace('https://github.com/','https://raw.githubusercontent.com/').replace('/blob/','/').replace('?raw=true','');u=u.replace(/https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\//,'https://cdn.jsdelivr.net/gh/$1/$2@$3/');return u;}
+function hex2rgb(h){h=String(h).replace('#','');return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+function gradient(pal){const N=256,g=[],seg=pal.length-1;for(let i=0;i<N;i++){const t=i/(N-1)*seg,k=Math.min(seg-1,Math.floor(t)),f=t-k,a=hex2rgb(pal[k]),b=hex2rgb(pal[k+1]);g.push([a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f]);}return g;}
+function colorFor(v){if(v===null||v===undefined||isNaN(v)||v<=NODATA||!CUR)return null;let t=(v-CUR.min)/(CUR.max-CUR.min);t=Math.max(0,Math.min(1,t));const c=CUR.grad[Math.round(t*(CUR.grad.length-1))];return 'rgb('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+')';}
+function colorRGB(v){if(v===null||v===undefined||isNaN(v)||v<=NODATA||!CUR)return null;let t=(v-CUR.min)/(CUR.max-CUR.min);t=Math.max(0,Math.min(1,t));return CUR.grad[Math.round(t*(CUR.grad.length-1))];}
+
+// ===== Data bawaan (fallback). tpl = template GeoTIFF dgn {tahun}. =====
+const FB_DS=[{id:1,nama:"ERA5 (ECMWF)",tm:1950,ts:2026,reso:"30000 m grid global",var:"Suhu, angin, hujan, tekanan",dl:"https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview"},{id:2,nama:"CHIRPS",tm:1981,ts:2026,reso:"~5550 m global",var:"Curah hujan tahunan",dl:"https://www.chc.ucsb.edu/data/chirps"},{id:3,nama:"MODIS (NASA)",tm:2000,ts:2026,reso:"250 - 1000 m",var:"LST, NDVI/EVI, aerosol",dl:"https://modis.gsfc.nasa.gov/data/"},{id:4,nama:"NOAA AVHRR Pathfinder SST",tm:1981,ts:2026,reso:"4000 m global",var:"Suhu permukaan laut",dl:"https://www.ncei.noaa.gov/products/avhrr-pathfinder-sst"},{id:5,nama:"OISST (NOAA)",tm:1981,ts:2026,reso:"~27750 m global",var:"SST harian",dl:"https://www.ncei.noaa.gov/products/optimum-interpolation-sst"},{id:8,nama:"NASA NEX-GDDP (CMIP6)",tm:1950,ts:2100,reso:"~27750 m",var:"Proyeksi suhu & hujan",dl:"https://www.nasa.gov/nasa-earth-exchange-nex/gddp/downscaled-climate-projections-nex-gddp-cmip6/"},{id:7,nama:"WorldClim v2",tm:1970,ts:2000,reso:"1000 m",var:"Iklim bulanan + bioklimatik bio1-19",dl:"https://www.worldclim.org/data/worldclim21.html",noyear:true},{id:6,nama:"CMEMS",tm:1993,ts:2026,reso:"~9250 m",var:"Sea level, arus laut, gelombang",dl:"https://marine.copernicus.eu/access-data/"}];
+const B="https://cdn.jsdelivr.net/gh/kingbenj329-cyber/layout-powerbi@main/";
+const FB_PE=[
+ {"id":1,"kat":"Suhu","tpl":B+"tif_2_ERA5_Suhu_{tahun}.tif"},
+ {"id":1,"kat":"Angin","tpl":B+"tif_2_ERA5_Angin_{tahun}.tif"},
+ {"id":1,"kat":"Curah hujan","tpl":B+"tif_2_ERA5_Curah_hujan_{tahun}.tif"},
+ {"id":1,"kat":"Tekanan udara","tpl":B+"tif_2_ERA5_Tekanan_udara_{tahun}.tif"},
+ {"id":2,"kat":"Curah hujan","tpl":B+"tif_3_CHIRPS_Curah_hujan_{tahun}.tif"},
+ {"id":3,"kat":"Suhu","tpl":B+"tif_4_MODIS_Suhu_{tahun}.tif"},
+ {"id":3,"kat":"NDVI/EVI","tpl":B+"tif_4_MODIS_NDVI-EVI_{tahun}.tif"},
+ {"id":3,"kat":"Aerosol","tpl":B+"tif_4_MODIS_Aerosol_{tahun}.tif"},
+ {"id":4,"kat":"Suhu","tpl":B+"tif_5_NOAAAVHRRPat_Suhu_{tahun}.tif"},
+ {"id":5,"kat":"Suhu","tpl":B+"tif_6_OISST_Suhu_{tahun}.tif"},
+ {"id":8,"kat":"Suhu","tpl":B+"tif_14_NASANEX-GDDP_Suhu_{tahun}.tif"},
+ {"id":8,"kat":"Curah hujan","tpl":B+"tif_14_NASANEX-GDDP_Curah_hujan_{tahun}.tif"},
+ {"id":7,"kat":"Suhu rata-rata","tpl":B+"tif_WorldClim_tavg_{tahun}.tif"},
+ {"id":7,"kat":"Suhu minimum","tpl":B+"tif_WorldClim_tmin_{tahun}.tif"},
+ {"id":7,"kat":"Suhu maksimum","tpl":B+"tif_WorldClim_tmax_{tahun}.tif"},
+ {"id":7,"kat":"Curah hujan (bulanan)","tpl":B+"tif_WorldClim_prec_{tahun}.tif"},
+ {"id":7,"kat":"Radiasi matahari","tpl":B+"tif_WorldClim_srad_{tahun}.tif"},
+ {"id":7,"kat":"Kecepatan angin","tpl":B+"tif_WorldClim_wind_{tahun}.tif"},
+ {"id":7,"kat":"Tekanan uap air","tpl":B+"tif_WorldClim_vapr_{tahun}.tif"},
+ {"id":7,"kat":"Bio1 - Suhu rata-rata tahunan","tpl":B+"tif_WorldClim_bio1_{tahun}.tif"},
+ {"id":7,"kat":"Bio12 - Curah hujan tahunan","tpl":B+"tif_WorldClim_bio12_{tahun}.tif"},
+ {"id":7,"kat":"Bio2 - Kisaran diurnal","tpl":B+"tif_WorldClim_bio2_{tahun}.tif"},
+ {"id":7,"kat":"Bio3 - Isotermalitas","tpl":B+"tif_WorldClim_bio3_{tahun}.tif"},
+ {"id":7,"kat":"Bio4 - Musiman suhu","tpl":B+"tif_WorldClim_bio4_{tahun}.tif"},
+ {"id":7,"kat":"Bio5 - Suhu maks bln terpanas","tpl":B+"tif_WorldClim_bio5_{tahun}.tif"},
+ {"id":7,"kat":"Bio6 - Suhu min bln terdingin","tpl":B+"tif_WorldClim_bio6_{tahun}.tif"},
+ {"id":7,"kat":"Bio7 - Kisaran suhu tahunan","tpl":B+"tif_WorldClim_bio7_{tahun}.tif"},
+ {"id":7,"kat":"Bio8 - Suhu kuartal terbasah","tpl":B+"tif_WorldClim_bio8_{tahun}.tif"},
+ {"id":7,"kat":"Bio9 - Suhu kuartal terkering","tpl":B+"tif_WorldClim_bio9_{tahun}.tif"},
+ {"id":7,"kat":"Bio10 - Suhu kuartal terpanas","tpl":B+"tif_WorldClim_bio10_{tahun}.tif"},
+ {"id":7,"kat":"Bio11 - Suhu kuartal terdingin","tpl":B+"tif_WorldClim_bio11_{tahun}.tif"},
+ {"id":7,"kat":"Bio13 - Hujan bln terbasah","tpl":B+"tif_WorldClim_bio13_{tahun}.tif"},
+ {"id":7,"kat":"Bio14 - Hujan bln terkering","tpl":B+"tif_WorldClim_bio14_{tahun}.tif"},
+ {"id":7,"kat":"Bio15 - Musiman hujan","tpl":B+"tif_WorldClim_bio15_{tahun}.tif"},
+ {"id":7,"kat":"Bio16 - Hujan kuartal terbasah","tpl":B+"tif_WorldClim_bio16_{tahun}.tif"},
+ {"id":7,"kat":"Bio17 - Hujan kuartal terkering","tpl":B+"tif_WorldClim_bio17_{tahun}.tif"},
+ {"id":7,"kat":"Bio18 - Hujan kuartal terpanas","tpl":B+"tif_WorldClim_bio18_{tahun}.tif"},
+ {"id":7,"kat":"Bio19 - Hujan kuartal terdingin","tpl":B+"tif_WorldClim_bio19_{tahun}.tif"},
+ {"id":6,"kat":"Sea level anomaly","tpl":B+"tif_CMEMS_sea_level_{tahun}.tif"},
+ {"id":6,"kat":"Arus laut","tpl":B+"tif_CMEMS_arus_laut_{tahun}.tif"},
+ {"id":6,"kat":"Gelombang","tpl":B+"tif_CMEMS_gelombang_{tahun}.tif"}
+];
+
+// ===== State =====
+let DATA=[], OVERLAYS={}, ALLGROUPS=[], selGroups=new Set(), yearOn=false, yearVal=2020, selId=null, selVar=null, opacity=1;
+let CUR=null, curUrl='', overlay=null, curGR=null, reqId=0;
+const $=id=>document.getElementById(id);
+const catlist=$("catlist");
+const map=L.map('map',{zoomControl:true}).fitBounds(PAPUA);
+const BASEMAPS={
+ "Terang (CARTO)": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap, &copy; CARTO',maxZoom:20}),
+ "Gelap (CARTO)": L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap, &copy; CARTO',maxZoom:20}),
+ "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap',maxZoom:19}),
+ "Satelit (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles &copy; Esri',maxZoom:19}),
+ "Topografi (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles &copy; Esri',maxZoom:19}),
+ "Relief (OpenTopoMap)": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap, SRTM | &copy; OpenTopoMap',maxZoom:17})
+};
+BASEMAPS["Terang (CARTO)"].addTo(map);
+
+// ===== Popup nilai eksak (geoblaze) =====
+function idAt(latlng,name){let body;
+ if(!curGR){body='peta belum dimuat';}
+ else{let v=null;try{const r=geoblaze.identify(curGR,[latlng.lng,latlng.lat]);v=(r&&r.length)?r[0]:null;}catch(e){v=null;}
+   if(v===null||v===undefined||isNaN(v)||v<=NODATA)body='tidak ada data di titik ini';
+   else body='<b>'+(CUR?CUR.label:'')+'</b><br>'+(+v).toFixed(2)+' '+((CUR&&CUR.unit)||'');}
+ const head=name?('<b>'+name+'</b><br>'):'';window.L.popup().setLatLng(latlng).setContent(head+body).openOn(map);}
+
+// ===== Batas wilayah (GeoJSON) =====
+map.createPane('bnd'); map.getPane('bnd').style.zIndex=450;
+const BND_STYLE={pane:'bnd',color:'#5c3934',weight:0.8,fill:true,fillOpacity:0,opacity:0.8};
+function nmOf(p){return p.ADMIN2||p.NAME_2||p.WADMKK||p.name||'';}
+const bndPapua=L.geoJSON(null,{pane:'bnd',bubblingMouseEvents:false,style:()=>BND_STYLE,onEachFeature:(f,l)=>{const p=f.properties||{};const nm=nmOf(p);const full=(p.ADMIN1?p.ADMIN1+' · ':'')+nm;if(nm)l.bindTooltip(full,{sticky:true});l.on('mouseover',()=>l.setStyle({weight:2,color:'#42231f'}));l.on('mouseout',()=>bndPapua.resetStyle(l));l.on('click',e=>idAt(e.latlng,full));}});
+const bndPNG=L.geoJSON(null,{pane:'bnd',bubblingMouseEvents:false,style:()=>BND_STYLE,onEachFeature:(f,l)=>{l.bindTooltip('Papua Nugini',{sticky:true});l.on('click',e=>idAt(e.latlng,'Papua Nugini'));}});
+L.control.layers(BASEMAPS, {"Batas kabupaten (Papua)":bndPapua,"Batas Papua Nugini":bndPNG}, {position:'topright', collapsed:true}).addTo(map);
+map.on('click',e=>idAt(e.latlng,null));
+fetch(B+'pulau_papua.json').then(r=>r.json()).then(g=>{bndPapua.addData(g);bndPapua.addTo(map);}).catch(()=>{});
+fetch(B+'png.json').then(r=>r.json()).then(g=>{bndPNG.addData(g);bndPNG.addTo(map);}).catch(()=>{});
+
+// ===== purge jsDelivr (setelah replace .tif) =====
+function purgeAndReload(url,applyFn){if(!url)return;const base=url.split('?')[0];if(base.indexOf('cdn.jsdelivr.net/gh/')<0){applyFn(base+'?t='+Date.now());return;}const p=base.replace('https://cdn.jsdelivr.net/gh/','https://purge.jsdelivr.net/gh/');fetch(p,{mode:'no-cors'}).catch(()=>{}).finally(()=>{setTimeout(()=>applyFn(base+'?t='+Date.now()),1500);});}
+
+function groupOf(k){const s=(k||'').toLowerCase();
+ if(s.includes('hujan')||s.includes('presipitasi')||s.includes('prec')) return 'Curah hujan';
+ if(s.includes('suhu')||s.includes('isoterm')||s.includes('diurnal')||s.includes('sst')||s.includes('temperatur')) return 'Suhu';
+ if(s.includes('angin')||s.includes('wind')) return 'Angin';
+ if(s.includes('tekanan udara')) return 'Tekanan udara';
+ if(s.includes('uap air')||s.includes('kelembapan')||s.includes('vapr')) return 'Kelembapan';
+ if(s.includes('radiasi')||s.includes('penyinaran')||s.includes('srad')) return 'Radiasi';
+ if(s.includes('ndvi')||s.includes('evi')||s.includes('vegetasi')) return 'Vegetasi';
+ if(s.includes('aerosol')) return 'Aerosol';
+ if(s.includes('sea level')) return 'Tinggi muka laut';
+ if(s.includes('arus')) return 'Arus laut';
+ if(s.includes('gelombang')) return 'Gelombang';
+ return k;
+}
+function groupsOf(d){return [...new Set(d.kat.map(groupOf))];}
+function defaultVar(d){if(selGroups.size){const m=d.kat.find(k=>selGroups.has(groupOf(k)));if(m)return m;}return d.kat[0];}
+function build(datasets, peta){
+  const name2id={}; const byId={};
+  DATA=datasets.map(d=>{name2id[d.nama]=d.id; const o={id:d.id,nama:d.nama,tm:d.tm,ts:d.ts,reso:d.reso,var:d.var,dl:d.dl,noyear:d.noyear,kat:[]}; byId[d.id]=o; return o;});
+  OVERLAYS={};
+  peta.forEach(p=>{const id=(p.id!=null&&p.id!=='')?p.id:name2id[p.nama]; const d=byId[id]; if(!d||!p.kat)return;
+    if(!d.kat.includes(p.kat))d.kat.push(p.kat);
+    if(p.tpl){const m=meta(p.kat); OVERLAYS[id+"|"+p.kat]={tpl:p.tpl,min:m.min,max:m.max,unit:m.unit,pal:m.pal};}});
+  DATA=DATA.filter(d=>d.kat.length);
+  const tmin=Math.min(...DATA.map(d=>d.tm)), tmax=Math.max(...DATA.map(d=>d.ts));
+  const yr=$("yearrange"); yr.min=tmin; yr.max=tmax;
+  if(yearVal<tmin||yearVal>tmax){yearVal=Math.min(tmax,Math.max(tmin,2020));}
+  yr.value=yearVal; $("yearout").textContent=yearOn?yearVal:"Semua"; $("yrmin").textContent=tmin; $("yrmax").textContent=tmax;
+  refresh();
+}
+function refresh(){
+  ALLGROUPS=[...new Set(DATA.flatMap(d=>groupsOf(d)))].sort((a,b)=>a.localeCompare(b));
+  selGroups.clear(); selVar=null; catlist.innerHTML="";
+  ALLGROUPS.forEach(g=>{const b=document.createElement("button");b.className="chip";b.textContent=g;b.onclick=()=>{selGroups.has(g)?selGroups.delete(g):selGroups.add(g);selVar=null;render()};catlist.appendChild(b)});
+  selId=DATA.length?DATA[0].id:null; render();
+}
+function filtered(){return DATA.filter(d=>{const g=groupsOf(d);const okc=selGroups.size===0||g.some(x=>selGroups.has(x));const oky=!yearOn||d.noyear||(d.tm<=yearVal&&yearVal<=d.ts);return okc&&oky})}
+function stat(k){const s=$("status");if(k==='hijau'){s.style.background="var(--hijau-50)";s.style.color="var(--hijau-td)";}else{s.style.background="var(--amber-50)";s.style.color="var(--amber-td)";}}
+// ambil .tif: coba jsDelivr, bila gagal (mis. 404 ter-cache) fallback ke raw.githubusercontent (cache terpisah)
+async function fetchTif(url){
+  try{ const r=await fetch(url); if(r.ok) return await r.arrayBuffer(); }catch(_){ }
+  const raw=url.replace('https://cdn.jsdelivr.net/gh/','https://raw.githubusercontent.com/').replace(/@([^/]+)\//,'/$1/');
+  const r2=await fetch(raw); if(!r2.ok) throw new Error('404'); return await r2.arrayBuffer();
+}
+// GeoTIFF -> render ke canvas -> ImageOverlay statis (render seketika, sejajar sesuai bounds file, tanpa quirk GridLayer)
+async function setRaster(url, fb, note){
+  const myId=++reqId; curUrl=url;
+  $("status").textContent="memuat..."; stat('amber'); $("maploading").classList.add('on');
+  try{
+    const buf=await fetchTif(url);
+    const georaster=await parseGeoraster(buf);
+    if(myId!==reqId) return;
+    georaster.noDataValue=-9999; curGR=georaster;
+    const B0=georaster.values[0], W=georaster.width, H=georaster.height;
+    // skala warna OTOMATIS dari data (persentil 2-98) -> tiap variabel (bio, prec bulanan, dll) kontras benar
+    try{const _s=[];for(let r=0;r<H;r+=2){const _row=B0[r];for(let c=0;c<W;c+=2){const v=_row[c];if(v>NODATA&&!isNaN(v))_s.push(v);}}
+      if(_s.length>20&&CUR){_s.sort((a,b)=>a-b);let lo=_s[Math.floor(_s.length*0.02)],hi=_s[Math.floor(_s.length*0.98)];
+        if(hi>lo){if(CUR.label&&/sea level|anomali/i.test(CUR.label)){const m=Math.max(Math.abs(lo),Math.abs(hi));lo=-m;hi=m;}
+          CUR.min=lo;CUR.max=hi;const f=(Math.abs(hi)<10)?2:(Math.abs(hi)<100?1:0);$("lmin").textContent=lo.toFixed(f);$("lmax").textContent=hi.toFixed(f);}}}catch(_){}
+    const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    const ctx=cv.getContext('2d'); const im=ctx.createImageData(W,H); const d=im.data;
+    for(let r=0;r<H;r++){const row=B0[r];const off=r*W*4;for(let c=0;c<W;c++){const rgb=colorRGB(row[c]);if(rgb){const i=off+c*4;d[i]=rgb[0]|0;d[i+1]=rgb[1]|0;d[i+2]=rgb[2]|0;d[i+3]=255;}}}
+    ctx.putImageData(im,0,0);
+    if(myId!==reqId) return;
+    const bounds=[[georaster.ymin,georaster.xmin],[georaster.ymax,georaster.xmax]];
+    if(overlay){map.removeLayer(overlay);overlay=null;}
+    overlay=L.imageOverlay(cv.toDataURL(),bounds,{opacity:opacity}); overlay.addTo(map);
+    $("maploading").classList.remove('on');
+    $("status").textContent=note||"ditampilkan"; stat(note?'amber':'hijau');
+  }catch(e){
+    if(myId!==reqId) return;
+    if(fb&&fb!==url){ setRaster(fb, null, yearOn?("tahun "+yearVal+" belum ada — tampil rata-rata"):null); return; }
+    $("maploading").classList.remove('on');
+    if(overlay){map.removeLayer(overlay);overlay=null;} curGR=null;
+    $("status").textContent=yearOn?"peta tahun ini belum tersedia":"peta belum tersedia"; stat('amber');
+  }
+}
+function render(){
+  ALLGROUPS.forEach((g,i)=>catlist.children[i]&&catlist.children[i].classList.toggle("on",selGroups.has(g)));
+  const list=filtered(); $("counter").textContent=list.length+" dataset"+(yearOn?" · "+yearVal:"");
+  if(!list.find(d=>d.id===selId)){selId=list.length?list[0].id:null;selVar=null;}
+  const dslistEl=$("dslist");dslistEl.innerHTML="";
+  list.forEach(d=>{const r=document.createElement("button");r.className="dsrow"+(d.id===selId?" on":"");r.innerHTML='<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+d.nama+'</span><span class="yr2">'+d.tm+'-'+d.ts+'</span>';r.onclick=()=>{selId=d.id;selVar=null;render()};dslistEl.appendChild(r)});
+  const d=DATA.find(x=>x.id===selId);
+  const chips=$("dschips");chips.innerHTML="";
+  if(!d){if(overlay){map.removeLayer(overlay);overlay=null;}curGR=null;$("lname").textContent="-";$("dsname").textContent="-";$("dsmeta").textContent="";$("status").textContent="tidak ada dataset";stat('amber');return;}
+  if(!selVar||!d.kat.includes(selVar)) selVar=defaultVar(d);
+  $("dsname").textContent=d.nama;
+  $("dsmeta").textContent=(d.reso||"")+"  |  "+d.tm+"-"+d.ts+(d.var?("  |  "+d.var):"");
+  d.kat.forEach(k=>{const b=document.createElement("button");b.className="kat"+(k===selVar?" on":"");b.textContent=k;if(selGroups.size&&!selGroups.has(groupOf(k)))b.style.opacity=".45";b.onclick=()=>{selVar=k;render()};chips.appendChild(b)});
+  $("dlbtn").onclick=()=>{if(d.dl)window.open(d.dl,"_blank")};
+  const v=selVar, ov=OVERLAYS[d.id+"|"+v];
+  $("lname").textContent=d.nama+" - "+v+(yearOn?" ("+yearVal+")":"");
+  if(ov&&ov.tpl){const avg=ov.tpl.replace('_{tahun}','');const url=yearOn?ov.tpl.replace(/\{tahun\}/g,yearVal):avg;const fb=yearOn?avg:null;
+    CUR={min:ov.min,max:ov.max,unit:ov.unit,grad:gradient(ov.pal),label:d.nama+" - "+v+(yearOn?" ("+yearVal+")":"")};
+    setRaster(url,fb);
+    $("bar").style.background='linear-gradient(to right,'+ov.pal.join(',')+')';$("lmin").textContent=ov.min;$("lmax").textContent=ov.max;$("lunit").textContent=ov.unit;}
+  else{CUR=null;$("maploading").classList.remove('on');if(overlay){map.removeLayer(overlay);overlay=null;}curGR=null;$("bar").style.background="#eee";$("lmin").textContent="";$("lmax").textContent="";$("lunit").textContent="";$("status").textContent="peta belum tersedia";stat('amber');}
+}
+$("clearcat").onclick=()=>{selGroups.clear();selVar=null;render()};
+$("yearon").onchange=e=>{yearOn=e.target.checked;$("yearrange").disabled=!yearOn;$("yearout").textContent=yearOn?yearVal:"Semua";render()};
+$("yearrange").oninput=e=>{yearVal=+e.target.value;$("yearout").textContent=yearVal;render()};
+$("opac").oninput=e=>{opacity=+e.target.value/100;$("opval").textContent=e.target.value+"%";if(overlay)overlay.setOpacity(opacity)};
+$("refresh").onclick=()=>{$("status").textContent="menyegarkan...";stat('amber');purgeAndReload(curUrl,u=>setRaster(u,null));};
+
+// ===== Baca Excel (Dataset + Peta_Tahun, kolom url_template .tif) =====
+function fromWB(wb){
+  const ds=XLSX.utils.sheet_to_json(wb.Sheets['Dataset'],{defval:''});
+  const pe=XLSX.utils.sheet_to_json(wb.Sheets['Peta_Tahun'],{defval:''});
+  const datasets=ds.filter(r=>r.data_id!=='').map(r=>({id:r.data_id,nama:String(r.nama_data).trim(),tm:r.tahun_mulai,ts:r.tahun_selesai,reso:String(r.resolusi||'').trim(),var:String(r.variable||'').trim(),dl:String(r.download_url||'').trim(),noyear:String(r.per_tahun||'').trim().toLowerCase()==='tidak'}));
+  const name2id={}; datasets.forEach(d=>name2id[d.nama]=d.id);
+  const peta=pe.map(r=>({id:(r.data_id!==''?r.data_id:name2id[String(r.nama_data).trim()]),kat:String(r.kategori_iklim).trim(),tpl:toRaw(String(r.url_template||'').trim())})).filter(p=>p.tpl);
+  build(datasets,peta);
+}
+// ===== Boot =====
+build(FB_DS, FB_PE);
+if(EXCEL_URL){fetch(EXCEL_URL).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>{fromWB(XLSX.read(b,{type:'array'}));}).catch(()=>{});}
+</script></body></html>
