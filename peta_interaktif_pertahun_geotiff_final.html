@@ -91,7 +91,7 @@
       </div>
     </div>
   </div></div>
-  <div id="noticeModal"><div class="card"><h4>Peta tahun ini belum tersedia</h4><p id="noticeText"></p><label class="dontshow"><input type="checkbox" id="noticeDont" style="vertical-align:-1px"> Jangan tampilkan lagi</label><button id="noticeOk">Oke, mengerti</button></div></div>
+  <div id="noticeModal"><div class="card"><h4 id="noticeTitle">Peta tahun ini belum tersedia</h4><p id="noticeText"></p><span id="noticeDontWrap"><label class="dontshow"><input type="checkbox" id="noticeDont" style="vertical-align:-1px"> Jangan tampilkan lagi</label></span><button id="noticeOk">Oke, mengerti</button></div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://unpkg.com/georaster"></script>
 <script src="https://unpkg.com/georaster-layer-for-leaflet/dist/georaster-layer-for-leaflet.min.js"></script>
@@ -251,7 +251,7 @@ function refresh(){
   ALLGROUPS.forEach(g=>{const b=document.createElement("button");b.className="chip";b.textContent=g;b.onclick=()=>{selGroups.has(g)?selGroups.delete(g):selGroups.add(g);selVar=null;render()};catlist.appendChild(b)});
   selId=DATA.length?DATA[0].id:null; render();
 }
-function filtered(){return DATA.filter(d=>{const g=groupsOf(d);const okc=selGroups.size===0||g.some(x=>selGroups.has(x));const oky=!yearOn||d.noyear||(d.tm<=yearVal&&yearVal<=d.ts);return okc&&oky})}
+function filtered(){return DATA.filter(d=>{const g=groupsOf(d);const okc=selGroups.size===0||g.some(x=>selGroups.has(x));const oky=!yearOn||(!d.noyear&&d.tm<=yearVal&&yearVal<=d.ts);return okc&&oky})}
 function stat(k){const s=$("status");if(k==='hijau'){s.style.background="var(--hijau-50)";s.style.color="var(--hijau-td)";}else{s.style.background="var(--amber-50)";s.style.color="var(--amber-td)";}}
 // ambil .tif: coba jsDelivr, bila gagal (mis. 404 ter-cache) fallback ke raw.githubusercontent (cache terpisah)
 async function fetchTif(url){
@@ -318,10 +318,13 @@ function render(){
   else{CUR=null;$("maploading").classList.remove('on');if(overlay){map.removeLayer(overlay);overlay=null;}curGR=null;$("bar").style.background="#eee";$("lmin").textContent="";$("lmax").textContent="";$("lunit").textContent="";$("status").textContent="peta belum tersedia";stat('amber');}
 }
 $("clearcat").onclick=()=>{selGroups.clear();selVar=null;render()};
-$("yearon").onchange=e=>{yearOn=e.target.checked;$("yearrange").disabled=!yearOn;$("yearout").textContent=yearOn?yearVal:"Semua";render()};
+$("yearon").onchange=e=>{
+  if(e.target.checked){const d=DATA.find(x=>x.id===selId); if(d&&d.noyear){openNotice("Hanya data rata-rata","Dataset <b>"+d.nama+"</b> hanya menyediakan data rata-rata (klimatologi "+d.tm+"–"+d.ts+"), tidak ada data per-tahun. Filter tahun dinonaktifkan.",false); e.target.checked=false; return;}}
+  yearOn=e.target.checked;$("yearrange").disabled=!yearOn;$("yearout").textContent=yearOn?yearVal:"Semua";render();};
 let noticeSilent=false, lastNoticeYear=null, _yrT=null;
 $("yearrange").oninput=e=>{yearVal=+e.target.value;$("yearout").textContent=yearVal;clearTimeout(_yrT);_yrT=setTimeout(render,250);};
-function showNotice(y){if(noticeSilent||lastNoticeYear===y)return;lastNoticeYear=y;$("noticeText").innerHTML="Peta untuk tahun <b>"+y+"</b> belum diunggah. Sementara ditampilkan <b>peta rata-rata</b>.";$("noticeModal").classList.add('on');}
+function openNotice(title,html,showDont){$("noticeTitle").textContent=title;$("noticeText").innerHTML=html;$("noticeDontWrap").style.display=showDont?'block':'none';$("noticeModal").classList.add('on');}
+function showNotice(y){if(noticeSilent||lastNoticeYear===y)return;lastNoticeYear=y;openNotice("Peta tahun ini belum tersedia","Peta untuk tahun <b>"+y+"</b> belum diunggah. Sementara ditampilkan <b>peta rata-rata</b>.",true);}
 $("noticeOk").onclick=()=>{if($("noticeDont").checked)noticeSilent=true;$("noticeModal").classList.remove('on');};
 $("opac").oninput=e=>{opacity=+e.target.value/100;$("opval").textContent=e.target.value+"%";if(overlay)overlay.setOpacity(opacity)};
 $("refresh").onclick=()=>{$("status").textContent="menyegarkan...";stat('amber');purgeAndReload(curUrl,u=>setRaster(u,null));};
