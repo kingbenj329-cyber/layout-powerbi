@@ -70,8 +70,8 @@
   </div>
   <div class="grid">
     <div class="side">
-      <div class="panel"><h3>Jenis iklim</h3><div class="hint">Kelompok variabel - filter dataset yang punya jenis ini</div><div class="chips" id="catlist"></div><button class="btn" id="clearcat" style="margin-top:8px;width:100%">Reset jenis iklim</button></div>
-      <div class="panel"><h3>Tahun</h3><label class="yr"><input type="checkbox" id="yearon" style="width:auto;margin-right:4px"> Aktifkan filter tahun</label><input type="range" id="yearrange" min="1980" max="2100" value="2020" step="1" disabled><div class="yrout" id="yearout">Semua</div><div class="yrrange"><span id="yrmin"></span><span id="yrmax"></span></div></div>
+      <div class="panel"><h3>Jenis iklim</h3><div class="hint">Lakukan filtering dataset berdasarkan kelompok pada variabel tertentu</div><div class="chips" id="catlist"></div><button class="btn" id="clearcat" style="margin-top:8px;width:100%">Reset jenis iklim</button></div>
+      <div class="panel"><h3>Tahun</h3><label class="yr"><input type="checkbox" id="yearon" style="width:auto;margin-right:4px"> Aktifkan filter tahun</label><input type="range" id="yearrange" min="1980" max="2100" value="2020" step="1" disabled><div class="yrout" id="yearout">Semua</div><div class="yrrange"><span id="yrmin"></span><span id="yrmax"></span></div><button class="btn btn2" id="animBtn" style="width:100%;margin-top:10px">▶ Putar animasi</button></div>
       <div class="panel"><h3>Dataset</h3><div class="dslist" id="dslist"></div></div>
     </div>
     <div class="main">
@@ -129,6 +129,8 @@ function hex2rgb(h){h=String(h).replace('#','');return [parseInt(h.substr(0,2),1
 function gradient(pal){const N=256,g=[],seg=pal.length-1;for(let i=0;i<N;i++){const t=i/(N-1)*seg,k=Math.min(seg-1,Math.floor(t)),f=t-k,a=hex2rgb(pal[k]),b=hex2rgb(pal[k+1]);g.push([a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f]);}return g;}
 function colorFor(v){if(v===null||v===undefined||isNaN(v)||v<=NODATA||!CUR)return null;let t=(v-CUR.min)/(CUR.max-CUR.min);t=Math.max(0,Math.min(1,t));const c=CUR.grad[Math.round(t*(CUR.grad.length-1))];return 'rgb('+Math.round(c[0])+','+Math.round(c[1])+','+Math.round(c[2])+')';}
 function colorRGB(v){if(v===null||v===undefined||isNaN(v)||v<=NODATA||!CUR)return null;let t=(v-CUR.min)/(CUR.max-CUR.min);t=Math.max(0,Math.min(1,t));return CUR.grad[Math.round(t*(CUR.grad.length-1))];}
+function renderGeoraster(g){curGR=g;const B0=g.values[0],W=g.width,H=g.height;const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');const im=ctx.createImageData(W,H);const d=im.data;for(let r=0;r<H;r++){const row=B0[r];const off=r*W*4;for(let c=0;c<W;c++){const rgb=colorRGB(row[c]);if(rgb){const i=off+c*4;d[i]=rgb[0]|0;d[i+1]=rgb[1]|0;d[i+2]=rgb[2]|0;d[i+3]=255;}}}ctx.putImageData(im,0,0);const bounds=[[g.ymin,g.xmin],[g.ymax,g.xmax]];if(overlay){map.removeLayer(overlay);overlay=null;}overlay=L.imageOverlay(cv.toDataURL(),bounds,{opacity:opacity});overlay.addTo(map);}
+function lockScale(g){if(!CUR)return;let sc=SCALES[CUR.key];if(!sc){const B0=g.values[0],W=g.width,H=g.height,_s=[];for(let r=0;r<H;r+=2){const _row=B0[r];for(let c=0;c<W;c+=2){const v=_row[c];if(v>NODATA&&!isNaN(v))_s.push(v);}}if(_s.length>20){_s.sort((a,b)=>a-b);let lo=_s[Math.floor(_s.length*0.02)],hi=_s[Math.floor(_s.length*0.98)];if(hi>lo){if(/sea level|anomali/i.test(CUR.label||'')){const m=Math.max(Math.abs(lo),Math.abs(hi));lo=-m;hi=m;}sc=[lo,hi];if(CUR.key)SCALES[CUR.key]=sc;}}}if(sc){CUR.min=sc[0];CUR.max=sc[1];const f=(Math.abs(sc[1])<10)?2:(Math.abs(sc[1])<100?1:0);$("lmin").textContent=sc[0].toFixed(f);$("lmax").textContent=sc[1].toFixed(f);}}
 
 // ===== Data bawaan (fallback). tpl = template GeoTIFF dgn {tahun}. =====
 const FB_DS=[{id:1,nama:"ERA5 (ECMWF)",tm:1950,ts:2026,reso:"30000 m grid global",var:"Suhu, angin, hujan, tekanan",dl:"https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels?tab=overview"},{id:2,nama:"CHIRPS",tm:1981,ts:2026,reso:"~5550 m global",var:"Curah hujan tahunan",dl:"https://www.chc.ucsb.edu/data/chirps"},{id:3,nama:"MODIS (NASA)",tm:2000,ts:2026,reso:"250 - 1000 m",var:"LST, NDVI/EVI, aerosol",dl:"https://modis.gsfc.nasa.gov/data/"},{id:4,nama:"NOAA AVHRR Pathfinder SST",tm:1981,ts:2026,reso:"4000 m global",var:"Suhu permukaan laut",dl:"https://www.ncei.noaa.gov/products/avhrr-pathfinder-sst"},{id:5,nama:"OISST (NOAA)",tm:1981,ts:2026,reso:"~27750 m global",var:"SST harian",dl:"https://www.ncei.noaa.gov/products/optimum-interpolation-sst"},{id:8,nama:"NASA NEX-GDDP (CMIP6)",tm:1950,ts:2100,reso:"~27750 m",var:"Proyeksi suhu & hujan",dl:"https://www.nasa.gov/nasa-earth-exchange-nex/gddp/downscaled-climate-projections-nex-gddp-cmip6/"},{id:7,nama:"WorldClim v2",tm:1970,ts:2000,reso:"1000 m",var:"Iklim bulanan + bioklimatik bio1-19",dl:"https://www.worldclim.org/data/worldclim21.html",noyear:true},{id:6,nama:"CMEMS",tm:1993,ts:2026,reso:"~9250 m",var:"Sea level, arus laut, gelombang",dl:"https://marine.copernicus.eu/access-data/"}];
@@ -179,7 +181,7 @@ const FB_PE=[
 
 // ===== State =====
 let DATA=[], OVERLAYS={}, ALLGROUPS=[], selGroups=new Set(), yearOn=false, yearVal=2020, selId=null, selVar=null, opacity=1;
-let CUR=null, curUrl='', overlay=null, curGR=null, reqId=0;
+let CUR=null, curUrl='', overlay=null, curGR=null, reqId=0, SCALES={}, animFrames=[], animIdx=0, animTimer=null, animPlaying=false, animTok=0;
 const $=id=>document.getElementById(id);
 const catlist=$("catlist");
 const map=L.map('map',{zoomControl:true}).fitBounds(PAPUA);
@@ -267,21 +269,10 @@ async function setRaster(url, fb, note){
     const buf=await fetchTif(url);
     const georaster=await parseGeoraster(buf);
     if(myId!==reqId) return;
-    georaster.noDataValue=-9999; curGR=georaster;
-    const B0=georaster.values[0], W=georaster.width, H=georaster.height;
-    // skala warna OTOMATIS dari data (persentil 2-98) -> tiap variabel (bio, prec bulanan, dll) kontras benar
-    try{const _s=[];for(let r=0;r<H;r+=2){const _row=B0[r];for(let c=0;c<W;c+=2){const v=_row[c];if(v>NODATA&&!isNaN(v))_s.push(v);}}
-      if(_s.length>20&&CUR){_s.sort((a,b)=>a-b);let lo=_s[Math.floor(_s.length*0.02)],hi=_s[Math.floor(_s.length*0.98)];
-        if(hi>lo){if(CUR.label&&/sea level|anomali/i.test(CUR.label)){const m=Math.max(Math.abs(lo),Math.abs(hi));lo=-m;hi=m;}
-          CUR.min=lo;CUR.max=hi;const f=(Math.abs(hi)<10)?2:(Math.abs(hi)<100?1:0);$("lmin").textContent=lo.toFixed(f);$("lmax").textContent=hi.toFixed(f);}}}catch(_){}
-    const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
-    const ctx=cv.getContext('2d'); const im=ctx.createImageData(W,H); const d=im.data;
-    for(let r=0;r<H;r++){const row=B0[r];const off=r*W*4;for(let c=0;c<W;c++){const rgb=colorRGB(row[c]);if(rgb){const i=off+c*4;d[i]=rgb[0]|0;d[i+1]=rgb[1]|0;d[i+2]=rgb[2]|0;d[i+3]=255;}}}
-    ctx.putImageData(im,0,0);
+    georaster.noDataValue=-9999;
+    lockScale(georaster);   // skala warna TERKUNCI per variabel -> legend seragam (statis + animasi)
     if(myId!==reqId) return;
-    const bounds=[[georaster.ymin,georaster.xmin],[georaster.ymax,georaster.xmax]];
-    if(overlay){map.removeLayer(overlay);overlay=null;}
-    overlay=L.imageOverlay(cv.toDataURL(),bounds,{opacity:opacity}); overlay.addTo(map);
+    renderGeoraster(georaster);
     $("maploading").classList.remove('on');
     $("status").textContent=note||"ditampilkan"; stat(note?'amber':'hijau');
   }catch(e){
@@ -297,7 +288,7 @@ function render(){
   const list=filtered(); $("counter").textContent=list.length+" dataset"+(yearOn?" · "+yearVal:"");
   if(!list.find(d=>d.id===selId)){selId=list.length?list[0].id:null;selVar=null;}
   const dslistEl=$("dslist");dslistEl.innerHTML="";
-  list.forEach(d=>{const r=document.createElement("button");r.className="dsrow"+(d.id===selId?" on":"");r.innerHTML='<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+d.nama+'</span><span class="yr2">'+d.tm+'-'+d.ts+'</span>';r.onclick=()=>{selId=d.id;selVar=null;render()};dslistEl.appendChild(r)});
+  list.forEach(d=>{const r=document.createElement("button");r.className="dsrow"+(d.id===selId?" on":"");r.innerHTML='<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+d.nama+'</span><span class="yr2">'+d.tm+'-'+d.ts+'</span>';r.onclick=()=>{stopAnim();selId=d.id;selVar=null;render()};dslistEl.appendChild(r)});
   const d=DATA.find(x=>x.id===selId);
   const chips=$("dschips");chips.innerHTML="";
   if(!d){if(overlay){map.removeLayer(overlay);overlay=null;}curGR=null;$("lname").textContent="-";$("dsname").textContent="-";$("dsmeta").textContent="";$("status").textContent="tidak ada dataset";stat('amber');return;}
@@ -307,25 +298,48 @@ function render(){
   if(!selVar||!d.kat.includes(selVar)) selVar=defaultVar(d);
   $("dsname").textContent=d.nama;
   $("dsmeta").textContent=(d.reso||"")+"  |  "+d.tm+"-"+d.ts+(d.var?("  |  "+d.var):"");
-  d.kat.forEach(k=>{const b=document.createElement("button");b.className="kat"+(k===selVar?" on":"");b.textContent=k;if(selGroups.size&&!selGroups.has(groupOf(k)))b.style.opacity=".45";b.onclick=()=>{selVar=k;render()};chips.appendChild(b)});
+  d.kat.forEach(k=>{const b=document.createElement("button");b.className="kat"+(k===selVar?" on":"");b.textContent=k;if(selGroups.size&&!selGroups.has(groupOf(k)))b.style.opacity=".45";b.onclick=()=>{stopAnim();selVar=k;render()};chips.appendChild(b)});
   $("dlbtn").onclick=()=>{if(d.dl)window.open(d.dl,"_blank")};
   const v=selVar, ov=OVERLAYS[d.id+"|"+v];
   $("lname").textContent=d.nama+" - "+v+(yearOn?" ("+yearVal+")":"");
   if(ov&&ov.tpl){const avg=ov.tpl.replace('_{tahun}','');const url=yearOn?ov.tpl.replace(/\{tahun\}/g,yearVal):avg;const fb=yearOn?avg:null;
-    CUR={min:ov.min,max:ov.max,unit:ov.unit,grad:gradient(ov.pal),label:d.nama+" - "+v+(yearOn?" ("+yearVal+")":"")};
+    CUR={min:ov.min,max:ov.max,unit:ov.unit,grad:gradient(ov.pal),key:d.id+"|"+v,label:d.nama+" - "+v+(yearOn?" ("+yearVal+")":"")};
     setRaster(url,fb);
     $("bar").style.background='linear-gradient(to right,'+ov.pal.join(',')+')';$("lmin").textContent=ov.min;$("lmax").textContent=ov.max;$("lunit").textContent=ov.unit;}
   else{CUR=null;$("maploading").classList.remove('on');if(overlay){map.removeLayer(overlay);overlay=null;}curGR=null;$("bar").style.background="#eee";$("lmin").textContent="";$("lmax").textContent="";$("lunit").textContent="";$("status").textContent="peta belum tersedia";stat('amber');}
 }
 $("clearcat").onclick=()=>{selGroups.clear();selVar=null;render()};
 $("yearon").onchange=e=>{
+  stopAnim();
   if(e.target.checked){const d=DATA.find(x=>x.id===selId); if(d&&d.noyear){openNotice("Hanya data rata-rata","Dataset <b>"+d.nama+"</b> hanya menyediakan data rata-rata (klimatologi "+d.tm+"–"+d.ts+"), tidak ada data per-tahun. Filter tahun dinonaktifkan.",false); e.target.checked=false; return;}}
   yearOn=e.target.checked;$("yearrange").disabled=!yearOn;$("yearout").textContent=yearOn?yearVal:"Semua";render();};
 let noticeSilent=false, lastNoticeYear=null, _yrT=null;
-$("yearrange").oninput=e=>{yearVal=+e.target.value;$("yearout").textContent=yearVal;clearTimeout(_yrT);_yrT=setTimeout(render,250);};
+$("yearrange").oninput=e=>{stopAnim();yearVal=+e.target.value;$("yearout").textContent=yearVal;clearTimeout(_yrT);_yrT=setTimeout(render,250);};
 function openNotice(title,html,showDont){$("noticeTitle").textContent=title;$("noticeText").innerHTML=html;$("noticeDontWrap").style.display=showDont?'block':'none';$("noticeModal").classList.add('on');}
 function showNotice(y){if(noticeSilent||lastNoticeYear===y)return;lastNoticeYear=y;openNotice("Peta tahun ini belum tersedia","Peta untuk tahun <b>"+y+"</b> belum diunggah. Sementara ditampilkan <b>peta rata-rata</b>.",true);}
 $("noticeOk").onclick=()=>{if($("noticeDont").checked)noticeSilent=true;$("noticeModal").classList.remove('on');};
+// ===== Animasi tahun-ke-tahun (pakai anim_*.tif, skala terkunci) =====
+function stopAnim(){animPlaying=false;clearTimeout(animTimer);animTok++;var b=$("animBtn");if(b)b.textContent="▶ Putar animasi";}
+function playFrame(){if(!animPlaying||!animFrames.length)return;const fr=animFrames[animIdx];renderGeoraster(fr.gr);$("yearout").textContent=fr.y;$("status").textContent="animasi · "+fr.y;stat('hijau');animIdx=(animIdx+1)%animFrames.length;animTimer=setTimeout(playFrame,800);}
+async function startAnim(){
+  if(animPlaying){stopAnim();return;}
+  const d=DATA.find(x=>x.id===selId);
+  if(!d||d.noyear){openNotice("Animasi tidak tersedia","Dataset ini tidak memiliki data per-tahun untuk dianimasikan.",false);return;}
+  const ov=OVERLAYS[d.id+"|"+selVar]; if(!ov||!ov.tpl)return;
+  const base=ov.tpl.replace('tif_','anim_');
+  const tok=++animTok; animFrames=[]; $("animBtn").disabled=true;
+  for(let y=d.tm;y<=d.ts;y++){
+    if(tok!==animTok){$("animBtn").disabled=false;return;}
+    $("animBtn").textContent="menyiapkan… "+(y-d.tm+1)+"/"+(d.ts-d.tm+1);
+    try{const buf=await fetchTif(base.replace(/\{tahun\}/g,y));const gr=await parseGeoraster(buf);gr.noDataValue=-9999;animFrames.push({y:y,gr:gr});}catch(e){}
+  }
+  $("animBtn").disabled=false;
+  if(tok!==animTok)return;
+  if(!animFrames.length){openNotice("Animasi belum tersedia","Belum ada file animasi (anim_...) untuk variabel ini di server.",false);$("animBtn").textContent="▶ Putar animasi";return;}
+  if(CUR)lockScale(animFrames[0].gr);
+  animIdx=0;animPlaying=true;$("animBtn").textContent="⏸ Jeda animasi";playFrame();
+}
+$("animBtn").onclick=startAnim;
 $("opac").oninput=e=>{opacity=+e.target.value/100;$("opval").textContent=e.target.value+"%";if(overlay)overlay.setOpacity(opacity)};
 $("refresh").onclick=()=>{$("status").textContent="menyegarkan...";stat('amber');purgeAndReload(curUrl,u=>setRaster(u,null));};
 
